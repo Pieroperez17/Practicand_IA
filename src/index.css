@@ -5,7 +5,8 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background: #0a1445;
+  background: radial-gradient(circle, rgba(10, 20, 69, 1) 0%, rgba(0, 0, 0, 1) 100%);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -25,7 +26,7 @@ a:hover {
 body {
   margin: 0;
   display: flex;
-  place-items: center;
+  place-items:initial;
   min-width: 320px;
   min-height: 100vh;
 }
@@ -43,6 +44,7 @@ button {
   font-weight: 500;
   font-family: inherit;
   background-color: #1a1a1a;
+  border: .5px solid #ffffff;
   cursor: pointer;
   transition: border-color 0.25s;
 }
