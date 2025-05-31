@@ -1,6 +1,6 @@
 import './App.css'
 import { useState } from 'react';
-
+import QuizGame from './components/ContPreguntas.jsx';
 
 function App() {
   const API_KEY = import.meta.env.VITE_LINK;
@@ -8,8 +8,8 @@ function App() {
   const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
 
   const [topic, setTopic] = useState('');
-  const [count, setCount] = useState(5);
-  const [response, setResponse] = useState('');
+  const [count, setCount] = useState(12);
+  const [response, setResponse] = useState(null); // Cambiado a null inicialmente
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -21,7 +21,7 @@ function App() {
 
     setIsLoading(true);
     setError('');
-    setResponse('Generando preguntas...');
+    setResponse(null); // Resetear la respuesta antes de generar nuevas preguntas
 
     try {
       const prompt = `Genera ${count} preguntas sobre "${topic}" en formato JSON válido. Estructura requerida:
@@ -30,7 +30,7 @@ function App() {
     "pregunta": "Texto pregunta",
     "opciones": ["Op1", "Op2", "Op3", "Op4", "Op5"],
     "respuesta_correcta": "OpX",
-    "dificultad": 1
+    "dificultad": Alta | Media | Baja
   }
 ]`;
 
@@ -58,7 +58,13 @@ function App() {
       
       if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
         const jsonText = extractJson(data.candidates[0].content.parts[0].text);
-        setResponse(jsonText);
+        try {
+          // Parsear el JSON aquí mismo
+          const parsedQuestions = JSON.parse(jsonText);
+          setResponse(parsedQuestions);
+        } catch (e) {
+          throw new Error('El formato de las preguntas generadas no es válido');
+        }
       } else {
         throw new Error('Formato de respuesta inesperado');
       }
@@ -84,13 +90,12 @@ function App() {
           JSON.parse(potentialJson);
           return potentialJson;
         } catch (e) {
-          return `No se pudo extraer JSON válido. Error: ${e instanceof Error ? e.message : String(e)}\n\nTexto recibido:\n${text}`;
+          throw new Error('No se pudo extraer JSON válido de la respuesta');
         }
       }
-      return `No se encontró JSON en la respuesta:\n${text}`;
+      throw new Error('No se encontró JSON en la respuesta');
     }
   };
-
 
   return (
     <>
@@ -101,24 +106,37 @@ function App() {
         <div className='prontContainer'>
           <input 
             type="text" 
-            name="" 
-            id="" 
             value={topic} 
             placeholder='Ingresa aqui el tema que quieres practicar'
             onChange={(e) => setTopic(e.target.value)}
             disabled={isLoading}
-            />
+          />
           <button onClick={generateQuestions} disabled={isLoading}>
             {isLoading ? 'Generando...' : 'Generar 🔍'}
           </button>
         </div>
+        <div className='countContainer'>
+          <label htmlFor="count">Cantidad de preguntas:</label>
+          <input 
+            type="number" 
+            id="count" 
+            value={count} 
+            onChange={(e) => setCount(Number(e.target.value))} 
+            min="1" 
+            max="20" 
+            disabled={isLoading}
+          />
+        </div>
 
         {error && <div className="error-message">{error}</div>}
-        <div className="response-container">
-          {response && (
-            <pre>{response}</pre>
-          )}
-        </div>
+        {isLoading && <div className="loading-message">Generando preguntas...</div>}
+        
+        {response && Array.isArray(response) && (
+          <div className="response-container">
+            <h1 style={{margin: 0}}>Preguntas Generadas:</h1>
+            <QuizGame questions={response} />
+          </div>
+        )}
       </div>
     </>
   )
